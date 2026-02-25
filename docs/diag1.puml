@@ -1,0 +1,54 @@
+@startuml
+
+' ===== Interfaces =====
+interface I1
+interface I2
+interface I
+
+I --|> I1
+I --|> I2
+
+' ===== Abstract class A =====
+abstract class A {
+    ' Fields
+    - int x
+    ~ String id
+    # String name
+    + double field1
+    {static} + int staticField
+
+    ' Constructors
+    + A()
+    + A(int x)
+    + A(int x, String id, String name, double field1)
+
+    ' Methods
+    {static} + staticMethod()
+    + String getFullName()
+    + void setFullName(String name)
+
+    + void method1()
+    # void method2()
+    ~ void method3()
+    - void method4()
+    {abstract} ~ void method5()
+}
+
+' ===== Nested interface and inner class =====
+interface "A.I3" as AI3
+class "A.Inner" as AInner
+
+A +-- AI3 : nested interface
+A +-- AInner : static inner class
+
+' ===== Class B =====
+class B {
+    + B()
+    + void method5()
+}
+
+' ===== Relationships =====
+B --|> A
+B ..|> I
+
+@enduml
