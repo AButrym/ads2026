@@ -1,17 +1,9 @@
 package edu.khnu.rbecs.ads2026;
 
-public class Sorting {
+import java.util.Arrays;
+import java.util.Random;
 
-    void main() {
-        int[] arr = {1, 3, 7, 31, 201, 800, 1003};
-        int key = 31;
-        int ix = binarySearch(key, arr);
-        if (ix < 0) {
-            System.out.println("Not found");
-        } else {
-            System.out.println("Found at index " + ix + " : " + arr[ix]);
-        }
-    }
+public class Sorting {
 
     public static int binarySearch(int key, int[] arr) {
         return binarySearch(key, arr, 0, arr.length - 1);
@@ -47,7 +39,16 @@ public class Sorting {
     }
 
     static void shuffle(int[] arr) {
-        // TODO
+        shuffle(arr, System.nanoTime());
+    }
+
+    static void shuffle(int[] arr, long seed) {
+        var rnd = new Random(seed);
+        int n = arr.length;
+        for (int i = 0; i < n - 1; i++) {
+            int j = rnd.nextInt(i, n);
+            swap(arr, i, j);
+        }
     }
 
     static int inversionsBruteForce(int[] arr) {
@@ -63,7 +64,7 @@ public class Sorting {
         return nInversions;
     }
 
-    public static int bubbleSort(int[] arr) {
+    public static int bubleSort(int[] arr) {
         int n = arr.length;
         int nInversions = 0;
         boolean swapped = true;
@@ -78,5 +79,56 @@ public class Sorting {
             }
         }
         return nInversions;
+    }
+
+    public static int insertionSort(int[] arr) {
+        int n = arr.length;
+        int nInversions = 0;
+        for (int i = 1; i < n; i++) {
+            for (int j = i; j > 0; j--) {
+                if (arr[j] < arr[j - 1]) {
+                    swap(arr, j, j - 1);
+                    nInversions++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return nInversions;
+    }
+
+    void main() {
+        for (int i = 0; i < 5; i++) {
+            // warmup
+            int[] fake = new int[2000];
+            shuffle(fake);
+            bubleSort(fake);
+            insertionSort(fake);
+        }
+        int n = 10_000;
+        for (int iter = 0; iter < 4; iter++, n *= 2) {
+            System.out.println("n = " + n);
+            int[] arr = new int[n];
+            for (int i = 0; i < n; i++) {
+                arr[i] = i;
+            }
+            int[] original = arr.clone();
+            long t0 = System.nanoTime();
+            shuffle(arr);
+            long t1 = System.nanoTime();
+            System.out.println("Shuffle time: " + (t1 - t0) / 1e6 + "ms");
+            int[] arr2 = arr.clone();
+            long t2 = System.nanoTime();
+            int nInversions1 = bubleSort(arr);
+            long t3 = System.nanoTime();
+            System.out.println("Buble sort time: " + (t3 - t2) / 1e6 + "ms");
+            long t4 = System.nanoTime();
+            int nInversions2 = insertionSort(arr2);
+            long t5 = System.nanoTime();
+            System.out.println("Insertion sort time: " + (t5 - t4) / 1e6 + "ms");
+            System.out.println("Inversions: " + nInversions1 + ", " + nInversions2);
+            System.out.println(Arrays.equals(original, arr));
+            System.out.println(Arrays.equals(original, arr2));
+        }
     }
 }
