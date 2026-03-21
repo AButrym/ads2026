@@ -2,6 +2,7 @@ package edu.khnu.rbecs.ads2026;
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class Sorting {
 
@@ -97,7 +98,70 @@ public class Sorting {
         return nInversions;
     }
 
-    void main() {
+    record SortResult(int[] sorted, long nInversions) {
+    }
+
+    static SortResult mergeSort(int[] arr) {
+        AtomicLong nInversions = new AtomicLong();
+        int[] sorted = mergeSort(arr, nInversions);
+        return new SortResult(sorted, nInversions.get());
+    }
+
+    static int[] mergeSort(int[] arr, AtomicLong nInversions) {
+        if (arr.length <= 1) return arr;
+        int mid = arr.length / 2;
+        int[] left = Arrays.copyOfRange(arr, 0, mid);
+        int[] right = Arrays.copyOfRange(arr, mid, arr.length);
+        return merge(mergeSort(left, nInversions),
+                mergeSort(right, nInversions),
+                nInversions);
+    }
+
+    static int[] merge(int[] arr1, int[] arr2, AtomicLong nInversions) {
+        int[] res = new int[arr1.length + arr2.length];
+        int i = 0, j = 0, k = 0;
+        while (i < arr1.length && j < arr2.length) {
+            if (arr1[i] <= arr2[j]) {
+                res[k++] = arr1[i++];
+            } else {
+                res[k++] = arr2[j++];
+                nInversions.getAndAdd(arr1.length - i);
+            }
+        }
+        while (i < arr1.length) {
+            res[k++] = arr1[i++];
+        }
+        while (j < arr2.length) {
+            res[k++] = arr2[j++];
+        }
+        return res;
+    }
+
+    static void main() {
+        int n = 10_000_000;
+        System.out.println("n = " + n);
+        int[] arr = new int[n];
+        for (int i = 0; i < n; i++) {
+            arr[i] = i;
+        }
+        int[] original = arr.clone();
+        long t0 = System.nanoTime();
+        shuffle(arr);
+        long t1 = System.nanoTime();
+        System.out.println("Shuffle time: " + (t1 - t0) / 1e6 + "ms");
+
+        int[] arr3 = arr.clone();
+        long t6 = System.nanoTime();
+        var res = mergeSort(arr3);
+        long t7 = System.nanoTime();
+        long nInversions3 = res.nInversions;
+        int[] sorted = res.sorted;
+        System.out.println("Merge sort time: " + (t7 - t6) / 1e6 + "ms");
+        System.out.println("Inversions: " + nInversions3);
+        System.out.println(Arrays.equals(original, sorted));
+    }
+
+    void main1() {
         for (int i = 0; i < 5; i++) {
             // warmup
             int[] fake = new int[2000];
@@ -113,22 +177,55 @@ public class Sorting {
                 arr[i] = i;
             }
             int[] original = arr.clone();
+
             long t0 = System.nanoTime();
             shuffle(arr);
             long t1 = System.nanoTime();
             System.out.println("Shuffle time: " + (t1 - t0) / 1e6 + "ms");
-            int[] arr2 = arr.clone();
+
+            int[] arr1 = arr.clone();
             long t2 = System.nanoTime();
-            int nInversions1 = bubleSort(arr);
+            int nInversions1 = bubleSort(arr1);
             long t3 = System.nanoTime();
             System.out.println("Buble sort time: " + (t3 - t2) / 1e6 + "ms");
+
+            int[] arr2 = arr.clone();
             long t4 = System.nanoTime();
             int nInversions2 = insertionSort(arr2);
             long t5 = System.nanoTime();
             System.out.println("Insertion sort time: " + (t5 - t4) / 1e6 + "ms");
-            System.out.println("Inversions: " + nInversions1 + ", " + nInversions2);
-            System.out.println(Arrays.equals(original, arr));
+
+            int[] arr3 = arr.clone();
+            long t6 = System.nanoTime();
+            var res = mergeSort(arr3);
+            long t7 = System.nanoTime();
+            long nInversions3 = res.nInversions;
+            int[] sorted = res.sorted;
+            System.out.println("Merge sort time: " + (t7 - t6) / 1e6 + "ms");
+
+            System.out.println("Inversions: " + nInversions1 + ", " + nInversions2 + ", " + nInversions3);
+            System.out.println(Arrays.equals(original, arr1));
             System.out.println(Arrays.equals(original, arr2));
+            System.out.println(Arrays.equals(original, sorted));
         }
+    }
+}
+
+class MergeSorter {
+    private int nInversions = 0;
+    private int[] res;
+
+    public int getNInversions() {
+        return nInversions;
+    }
+
+    public int[] sorted() {
+        return res;
+    }
+
+    public MergeSorter(int[] arr) {
+    }
+
+    public void merge(int[] arr, int left, int mid, int right) {
     }
 }
