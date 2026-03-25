@@ -137,7 +137,31 @@ public class Sorting {
         return res;
     }
 
+    static int twoWayPartition(int[] arr) {
+        int pivot = arr[0];
+        int left = 1;
+        int right = arr.length - 1;
+        while (left <= right) {
+            if (arr[left] <= pivot) left++;
+            else {
+                swap(arr, left, right);
+                right--;
+            }
+        }
+        swap(arr, 0, right);
+        return right;
+    }
+
     static void main() {
+        int[] arr = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        shuffle(arr);
+        System.out.println(Arrays.toString(arr));
+        int mid = twoWayPartition(arr);
+        System.out.println(Arrays.toString(arr));
+        System.out.println("mid = " + mid);
+    }
+
+    static void main2() {
         int n = 10_000_000;
         System.out.println("n = " + n);
         int[] arr = new int[n];
