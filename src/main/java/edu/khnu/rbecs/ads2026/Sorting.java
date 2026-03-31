@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Sorting {
+    static final Random RND = new Random(42);
 
     public static int binarySearch(int key, int[] arr) {
         return binarySearch(key, arr, 0, arr.length - 1);
@@ -137,10 +138,56 @@ public class Sorting {
         return res;
     }
 
-    static int twoWayPartition(int[] arr) {
-        int pivot = arr[0];
-        int left = 1;
-        int right = arr.length - 1;
+    static void quickSort(int[] arr) {
+//        shuffle(arr);
+        quickSort2(arr, 0, arr.length);
+    }
+
+    static void quickSort(int[] arr, int from, int toExclusive) {
+        if (from >= toExclusive) return;
+        int mid = twoWayPartition(arr, from, toExclusive);
+        quickSort(arr, from, mid);
+        quickSort(arr, mid + 1, toExclusive);
+    }
+
+    static void quickSort2(int[] arr, int from, int toExclusive) {
+        if (from >= toExclusive) return;
+        Range mid = threeWayPartition(arr, from, toExclusive);
+        quickSort2(arr, from, mid.from);
+        quickSort2(arr, mid.toExclusive, toExclusive);
+    }
+
+    record Range(int from, int toExclusive) {}
+
+    static Range threeWayPartition(int[] arr, int from, int toExclusive) {
+        if (from >= toExclusive) return new Range(from, from + 1);
+        int pivotPos = RND.nextInt(from, toExclusive);
+        swap(arr, pivotPos, from);
+        int pivot = arr[from];
+        int left = from;
+        int mid = from + 1;
+        int right = toExclusive - 1;
+        while (mid <= right) {
+            if (arr[mid] == pivot) mid++;
+            else if (arr[mid] < pivot) {
+                swap(arr, left, mid);
+                left++;
+                mid++;
+            } else {
+                swap(arr, mid, right);
+                right--;
+            }
+        }
+        return new Range(left, mid);
+    }
+
+    static int twoWayPartition(int[] arr, int from, int toExclusive) {
+        if (from >= toExclusive) return from;
+        int pivotPos = RND.nextInt(from, toExclusive);
+        swap(arr, pivotPos, from);
+        int pivot = arr[from];
+        int left = from + 1;
+        int right = toExclusive - 1;
         while (left <= right) {
             if (arr[left] <= pivot) left++;
             else {
@@ -148,31 +195,47 @@ public class Sorting {
                 right--;
             }
         }
-        swap(arr, 0, right);
+        swap(arr, from, right);
         return right;
     }
 
-    static void main() {
+    static void main3() {
         int[] arr = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         shuffle(arr);
         System.out.println(Arrays.toString(arr));
-        int mid = twoWayPartition(arr);
+//        int mid = twoWayPartition(arr, 0, arr.length);
+        quickSort(arr);
         System.out.println(Arrays.toString(arr));
-        System.out.println("mid = " + mid);
+//        System.out.println("mid = " + mid);
     }
 
-    static void main2() {
+    static void main() {
         int n = 10_000_000;
         System.out.println("n = " + n);
         int[] arr = new int[n];
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n/2; i++) {
             arr[i] = i;
         }
+        Arrays.fill(arr, n/2, n, n/2);
         int[] original = arr.clone();
         long t0 = System.nanoTime();
         shuffle(arr);
         long t1 = System.nanoTime();
         System.out.println("Shuffle time: " + (t1 - t0) / 1e6 + "ms");
+
+        int[] arr1 = arr.clone();
+        long t2 = System.nanoTime();
+        quickSort(arr1);
+        long t3 = System.nanoTime();
+        System.out.println("QuickSort sort time: " + (t3 - t2) / 1e6 + "ms");
+        System.out.println(Arrays.equals(original, arr1));
+
+        int[] arr2 = arr.clone();
+        long t4 = System.nanoTime();
+        Arrays.sort(arr2);
+        long t5 = System.nanoTime();
+        System.out.println("Lib QuickSort sort time: " + (t5 - t4) / 1e6 + "ms");
+        System.out.println(Arrays.equals(original, arr2));
 
         int[] arr3 = arr.clone();
         long t6 = System.nanoTime();
