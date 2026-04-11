@@ -1,23 +1,27 @@
 package edu.khnu.rbecs.programming;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.stream.Stream;
 
 public class WriteFileDemo {
     static void main() throws IOException {
         // OutputStream (binary) <--Charset-- Writer (text)
         // InputStream (binary) --Charset--> Reader (text)
-        String filename = "hello.txt";
-        try (
-                var fos = new FileOutputStream(filename, true);
-                var fis = new FileOutputStream(filename);
-        ) {
-            byte[] bytes = {48, 49, 50, 51, (byte) 135};
-            fos.write(bytes);
+        String filename1 = "hello.txt";
+        String filename2 = "hello2.txt";
+        try (Stream<String> lines = Files.lines(
+                Path.of(filename1))) {
+            Files.write(Path.of(filename2),
+                    lines
+                            .peek(line -> System.out.println(">> " + line))
+                            .takeWhile(line -> !line.equals("line3"))
+                            .map(String::toUpperCase)
+                            .toList(),
+                    StandardOpenOption.APPEND
+            );
         }
     }
 }
