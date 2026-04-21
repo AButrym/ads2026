@@ -3,6 +3,9 @@ package edu.khnu.rbecs.ads2026;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+
+import java.util.NoSuchElementException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class StringListTest {
@@ -237,6 +240,84 @@ class StringListTest {
         void testEmptyListIterator() {
             StringIterator iterator = list.iterator();
             assertFalse(iterator.hasNext());
+        }
+
+        @Test
+        void testStackPushAndPop() {
+            StringStack stack = (StringStack) list;
+            stack.push("first");
+            stack.push("second");
+            assertEquals(2, stack.size());
+            assertEquals("second", stack.pop());
+            assertEquals("first", stack.pop());
+            assertEquals(0, stack.size());
+        }
+
+        @Test
+        void testStackPeek() {
+            StringStack stack = (StringStack) list;
+            stack.push("top");
+            assertEquals("top", stack.peek());
+            assertEquals(1, stack.size());
+            assertEquals("top", stack.pop());
+        }
+
+        @Test
+        void testStackEmptyPopAndPeek() {
+            StringStack stack = (StringStack) list;
+            assertThrows(NoSuchElementException.class, stack::pop);
+            assertThrows(NoSuchElementException.class, stack::peek);
+        }
+
+        @Test
+        void testStackListInteraction() {
+            StringStack stack = (StringStack) list;
+            stack.push("stack_top");
+            list.add("list_tail"); // add should add to the end
+            assertEquals(2, list.size());
+            assertEquals("stack_top", list.get(0));
+            assertEquals("list_tail", list.get(1));
+
+            assertEquals("stack_top", stack.pop());
+            assertEquals(1, list.size());
+            assertEquals("list_tail", list.get(0));
+        }
+
+        @Test
+        void testQueueEnqueueAndDequeue() {
+            StringQueue queue = (StringQueue) list;
+            queue.enqueue("first");
+            queue.enqueue("second");
+            assertEquals(2, queue.size());
+            assertEquals("first", queue.dequeue());
+            assertEquals("second", queue.dequeue());
+            assertEquals(0, queue.size());
+        }
+
+        @Test
+        void testQueuePeek() {
+            StringQueue queue = (StringQueue) list;
+            queue.enqueue("front");
+            assertEquals("front", queue.peek());
+            assertEquals(1, queue.size());
+            assertEquals("front", queue.dequeue());
+        }
+
+        @Test
+        void testQueueEmptyDequeueAndPeek() {
+            StringQueue queue = (StringQueue) list;
+            assertThrows(NoSuchElementException.class, queue::dequeue);
+            assertThrows(NoSuchElementException.class, queue::peek);
+        }
+
+        @Test
+        void testQueueInteraction() {
+            StringQueue queue = (StringQueue) list;
+            queue.enqueue("one");
+            list.add("two");
+            assertEquals(2, queue.size());
+            assertEquals("one", queue.dequeue());
+            assertEquals("two", queue.dequeue());
         }
     }
 }

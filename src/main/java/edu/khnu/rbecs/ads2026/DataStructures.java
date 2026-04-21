@@ -1,6 +1,7 @@
 package edu.khnu.rbecs.ads2026;
 
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 public class DataStructures {
     static void main() {
@@ -17,18 +18,59 @@ interface StringIterator {
     String next();
 }
 
-interface StringList extends StringIterable {
+// Trait
+interface HasSize {
+    int size();
+    default boolean isEmpty() {
+        return size() == 0;
+    }
+}
+// LIFO -- Last In First Out
+interface StringStack extends HasSize, StringIterable {
+    void push(String s);
+    String pop();
+    String peek();
+}
+// FIFO -- First In First Out
+interface StringQueue extends HasSize, StringIterable {
+    void enqueue(String s);
+    String dequeue();
+    String peek();
+}
+
+interface StringDeque extends StringStack, StringQueue {
+    void addFirst(String s);
+    String removeFirst();
+    String peekFirst();
+    void addLast(String s);
+    String removeLast();
+    String peekLast();
+
+    default String peek() {
+        return peekFirst();
+    }
+    default String pop() {
+        return removeFirst();
+    }
+    default void push(String s) {
+        addFirst(s);
+    }
+    default void enqueue(String s) {
+        addLast(s);
+    }
+    default String dequeue() {
+        return removeFirst();
+    }
+}
+
+interface StringList extends StringIterable, HasSize {
     // CRUD - Create, Read, Update, Delete
     void add(String s);
     String get(int index);
     String set(int index, String s);
     String removeAt(int index);
     int indexOf(String s);
-    int size();
 
-    default boolean isEmpty() {
-        return size() == 0;
-    }
     default boolean contains(String s) {
         return indexOf(s) != -1;
     }
@@ -55,7 +97,7 @@ abstract class AbstractStringList implements StringList {
     }
 }
 
-class LinkedListStringList extends AbstractStringList {
+class LinkedListStringList extends AbstractStringList implements StringStack, StringQueue {
     private static class Node {
         String value;
         Node next;
@@ -90,6 +132,45 @@ class LinkedListStringList extends AbstractStringList {
     public int size() {
         return size;
     }
+
+    @Override
+    public void push(String s) {
+        Node node = new Node(s);
+        if (head == null) {
+            head = tail = node;
+        } else {
+            node.next = head;
+            head = node;
+        }
+        size++;
+    }
+
+    @Override
+    public String pop() {
+        if (head == null) throw new NoSuchElementException();
+        var res = head.value;
+        if (head == tail) { tail = null; }
+        head = head.next;
+        size--;
+        return res;
+    }
+
+    @Override
+    public String peek() {
+        if (head != null) return head.value;
+        throw new NoSuchElementException();
+    }
+
+    @Override
+    public void enqueue(String s) {
+        add(s);
+    }
+
+    @Override
+    public String dequeue() {
+        return pop();
+    }
+
     public void add(String s) {
         Node node = new Node(s);
         if (tail == null) {
@@ -136,6 +217,9 @@ class LinkedListStringList extends AbstractStringList {
         }
         Node prev = atIndex(index - 1);
         var old = prev.next.value;
+        if (prev.next == tail) {
+            tail = prev;
+        }
         prev.next = prev.next.next;
         size--;
         return old;
@@ -192,6 +276,140 @@ class ArrayStringList extends AbstractStringList {
         String old = data[index];
         System.arraycopy(data, index + 1, data, index, size - index - 1);
         data[--size] = null; // Let GC do its work, prevent memory leak
+        return old;
+    }
+}
+
+class CircularArrayStringDeque extends AbstractStringList implements StringDeque {
+    private static final int INITIAL_SIZE = 8;
+    private static final float GROW_FACTOR = 1.5f;
+    private String[] data = new String[INITIAL_SIZE];
+    private int size = 0;
+    private int front = 0;
+    private int rear = 0; // exclusive
+
+    @Override
+    public StringIterator iterator() {
+        return new ArrayIterator();
+    }
+
+    private class ArrayIterator implements StringIterator {
+        private int index = front;
+        @Override
+        public boolean hasNext() {
+            return index != rear;
+        }
+        @Override
+        public String next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            var res = data[index++];
+            if (index == data.length) index = 0;
+            return res;
+        }
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    private void ensureSize() {
+        if (size == data.length) {
+            var newSize = (int)(data.length * GROW_FACTOR);
+            var newData = new String[newSize];
+            if (front < rear) {
+                System.arraycopy(data, front, newData, 0, size);
+            } else {
+                System.arraycopy(data, front, newData, 0, data.length - front);
+                System.arraycopy(data, 0, newData, data.length - front, rear);
+            }
+            front = 0;
+            rear = size;
+            data = newData;
+        }
+    }
+
+    public void addLast(String s) {
+        ensureSize();
+        if (rear == data.length) rear = 0;
+        data[rear++] = s;
+        size++;
+    }
+
+    public void addFirst(String s) {
+        ensureSize();
+        if (front == 0) front = data.length;
+        data[--front] = s;
+        size++;
+    }
+
+    public String removeFirst() {
+        if (isEmpty()) throw new NoSuchElementException();
+        var res = data[front];
+        data[front] = null;
+        if (front == data.length - 1) front = 0;
+        else front++;
+        size--;
+        return res;
+    }
+
+    public String removeLast() {
+        if (isEmpty()) throw new NoSuchElementException();
+        if (rear == 0) rear = data.length;
+        var res = data[--rear];
+        data[rear] = null;
+        size--;
+        return res;
+    }
+
+    @Override
+    public String peekFirst() {
+        if (isEmpty()) throw new NoSuchElementException();
+        return data[front];
+    }
+
+    @Override
+    public String peekLast() {
+        if (isEmpty()) throw new NoSuchElementException();
+        return data[rear == 0 ? data.length - 1 : rear - 1];
+    }
+
+    @Override
+    public void add(String s) {
+        addLast(s);
+    }
+
+    public String get(int index) {
+        checkIndex(index);
+        return data[ix(index)];
+    }
+
+    private int ix(int i) {
+        return (front + i) % data.length;
+    }
+
+    public String set(int index, String s) {
+        checkIndex(index);
+        int ix = ix(index);
+        String old = data[ix];
+        data[ix] = s;
+        return old;
+    }
+
+    public String removeAt(int index) {
+        checkIndex(index);
+        int ix = ix(index);
+        String old = data[ix];
+
+        // Move elements after index one position to the left
+        for (int i = index; i < size - 1; i++) {
+            data[ix(i)] = data[ix(i + 1)];
+        }
+        
+        int lastIx = ix(size - 1);
+        data[lastIx] = null;
+        size--;
+        rear = lastIx;
         return old;
     }
 }
