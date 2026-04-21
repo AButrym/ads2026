@@ -402,10 +402,20 @@ class CircularArrayStringDeque extends AbstractStringList implements StringDeque
         String old = data[ix];
 
         // Move elements after index one position to the left
-        for (int i = index; i < size - 1; i++) {
-            data[ix(i)] = data[ix(i + 1)];
+        int startIx = ix(index);
+        int endIx = ix(size - 1);
+
+        if (startIx < endIx) {
+            // No wraparound - can use System.arraycopy
+            System.arraycopy(data, startIx + 1, data, startIx, endIx - startIx);
+        } else {
+            // Wraparound case - use 2 arraycopy invocations
+            // Copy from startIx to end of the array, then move the first element to last
+            int firstPartLen = data.length - startIx - 1;
+            System.arraycopy(data, startIx + 1, data, startIx, firstPartLen);
+            data[data.length - 1] = data[0];
+            System.arraycopy(data, 1, data, 0, endIx);
         }
-        
         int lastIx = ix(size - 1);
         data[lastIx] = null;
         size--;
