@@ -99,4 +99,19 @@ class MyHashMapTest {
         assertEquals(2, map.get(key2));
         assertEquals(2, map.size());
     }
+
+    @Test
+    void testResize() {
+        // Initial capacity is 8, load factor is 0.75.
+        // Threshold is 8 * 0.75 = 6.
+        // Adding 7 elements should trigger resize.
+        for (int i = 0; i < 10; i++) {
+            map.put("key" + i, i);
+        }
+
+        assertEquals(10, map.size());
+        for (int i = 0; i < 10; i++) {
+            assertEquals(i, map.get("key" + i), "Value for key" + i + " should be preserved after resize");
+        }
+    }
 }
