@@ -25,10 +25,11 @@ public class GraphAlgorithms {
         while (!queue.isEmpty()) {
             var current = queue.poll();
             visitor.visit(current);
+            var curDistance = res.get(current).distance;
             for (var neighbor : g.neighbors(current)) {
                 if (!res.containsKey(neighbor)) {
                     queue.add(neighbor);
-                    res.put(neighbor, new BacktrackInfo(res.get(current).distance + 1, current));
+                    res.put(neighbor, new BacktrackInfo(curDistance + 1, current));
                 }
             }
         }
@@ -66,6 +67,7 @@ abstract class Graph {
     private final int nNodes;
     protected List<Integer>[] adjacency;
 
+    @SuppressWarnings("unchecked")
     public Graph(int nNodes) {
         this.nNodes = nNodes;
         adjacency = new List[nNodes];
